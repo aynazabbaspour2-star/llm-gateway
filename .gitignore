@@ -1,0 +1,29 @@
+# Environment / secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.venv/
+venv/
+
+# IDE / OS
+.idea/
+.vscode/
+.DS_Store
+
+# Local model files
+models/*.gguf
+
+# Local logs / temporary files
+*.log
+*.tmp
+
+# Backup files
+*.backup
+*.before-*
+*.stable-*
