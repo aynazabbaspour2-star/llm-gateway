@@ -1,0 +1,56 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Python syntax check
+        run: |
+          python -m py_compile app/main.py fault_proxy.py
+
+      - name: Shell syntax check
+        run: |
+          bash -n concurrent_test.sh
+          bash -n error_contract_test.sh
+          bash -n regression_test.sh
+          bash -n security_test.sh
+          bash -n validation_error_test.sh
+          bash -n validation_test.sh
+
+      - name: Git diff check
+        run: |
+          git diff --check
+
+      - name: Structural checks
+        run: |
+          test -f Dockerfile
+          test -f docker-compose.yml
+          test -f requirements.txt
+          test -f README.md
+          test -f SECURITY.md
+          test -f LICENSE
+          test -f .env.example
+          test -f .dockerignore
+          test -f .gitignore
