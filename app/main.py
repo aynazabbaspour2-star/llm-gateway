@@ -406,6 +406,23 @@ async def request_id_middleware(
 # Authentication + Rate Limiting
 # ============================================================
 
+def extract_api_key(
+    x_api_key: str | None,
+    authorization: str | None,
+) -> str | None:
+
+    if x_api_key:
+        return x_api_key
+
+    if authorization:
+        scheme, _, credentials = authorization.partition(" ")
+
+        if scheme.lower() == "bearer" and credentials:
+            return credentials
+
+    return None
+
+
 def authenticate_and_rate_limit(
     x_api_key: str | None,
     request: Request,
@@ -661,10 +678,19 @@ async def models(
         default=None,
         alias="X-API-Key",
     ),
+    authorization: str | None = Header(
+        default=None,
+        alias="Authorization",
+    ),
 ):
 
-    auth_result = authenticate_and_rate_limit(
+    api_key = extract_api_key(
         x_api_key,
+        authorization,
+    )
+
+    auth_result = authenticate_and_rate_limit(
+        api_key,
         request,
     )
 
@@ -715,10 +741,19 @@ async def chat_completions(
         default=None,
         alias="X-API-Key",
     ),
+    authorization: str | None = Header(
+        default=None,
+        alias="Authorization",
+    ),
 ):
 
-    auth_result = authenticate_and_rate_limit(
+    api_key = extract_api_key(
         x_api_key,
+        authorization,
+    )
+
+    auth_result = authenticate_and_rate_limit(
+        api_key,
         request,
     )
 

@@ -1,17 +1,17 @@
 {
-  "name": "LLM Gateway - Telegram AI Agent",
+  "name": "LLM Gateway - Bale AI Agent",
   "nodes": [
     {
       "parameters": {
-        "updates": [
-          "message"
-        ],
-        "additionalFields": {}
+        "httpMethod": "POST",
+        "path": "devora-bot",
+        "responseMode": "onReceived",
+        "options": {}
       },
-      "id": "telegram-trigger",
-      "name": "Telegram Trigger",
-      "type": "n8n-nodes-base.telegramTrigger",
-      "typeVersion": 1.2,
+      "id": "bale-webhook",
+      "name": "Bale Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
       "position": [
         0,
         0
@@ -20,7 +20,7 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "={{ $json.message.text }}",
+        "text": "={{ $json.body.message.text }}",
         "options": {
           "systemMessage": "You are a helpful AI assistant. Answer clearly and concisely. Use conversation memory when relevant."
         }
@@ -36,7 +36,7 @@
     },
     {
       "parameters": {
-        "modelName": "qwen2.5-0.5b-instruct",
+        "modelName": "qwen-local",
         "options": {}
       },
       "id": "llm-gateway",
@@ -46,12 +46,18 @@
       "position": [
         300,
         220
-      ]
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "yQzwOuizmuHQs3WC",
+          "name": "OpenAI account"
+        }
+      }
     },
     {
       "parameters": {
         "sessionIdType": "customKey",
-        "sessionKey": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "sessionKey": "={{ $json.body.message.chat.id }}",
         "contextWindowLength": 10
       },
       "id": "conversation-memory",
@@ -65,16 +71,26 @@
     },
     {
       "parameters": {
-        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
-        "text": "={{ $json.output }}",
-        "additionalFields": {
-          "appendAttribution": false
-        }
+        "method": "POST",
+        "url": "=https://tapi.bale.ai/bot{{$env.BALE_BOT_TOKEN}}/sendMessage",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ { \"chat_id\": $('Bale Webhook').item.json.body.message.chat.id, \"text\": $json.output } }}",
+        "options": {}
       },
-      "id": "telegram-reply",
-      "name": "Telegram Reply",
-      "type": "n8n-nodes-base.telegram",
-      "typeVersion": 1.2,
+      "id": "bale-reply",
+      "name": "Bale Reply",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [
         700,
         0
@@ -82,7 +98,7 @@
     }
   ],
   "connections": {
-    "Telegram Trigger": {
+    "Bale Webhook": {
       "main": [
         [
           {
@@ -119,7 +135,7 @@
       "main": [
         [
           {
-            "node": "Telegram Reply",
+            "node": "Bale Reply",
             "type": "main",
             "index": 0
           }
@@ -135,5 +151,6 @@
   "meta": {
     "templateCredsSetupCompleted": false
   },
-  "tags": []
+  "tags": [],
+  "id": "bale-devora-ai-agent"
 }
